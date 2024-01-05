@@ -43,16 +43,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -185,7 +179,7 @@ public class ARSCDecoder {
         for (int i = 0; i < resFiles.length; i++) {
           // 这里也要用linux的分隔符,如果普通的话，就是r
           mOldFileName.put("res" + "/" + resFiles[i].getName(),
-             TypedValue.RES_FILE_PATH + "/" + mResguardBuilder.getReplaceString()
+                  TypedValue.RES_FILE_PATH + "/" + mResguardBuilder.getReplaceString()
           );
         }
       }
@@ -223,8 +217,8 @@ public class ARSCDecoder {
     writeNextChunk(0);
     if (packageCount != mPkgs.length) {
       throw new AndrolibException(String.format("writeTable package count is different before %d, now %d",
-         mPkgs.length,
-         packageCount
+              mPkgs.length,
+              packageCount
       ));
     }
     for (int i = 0; i < packageCount; i++) {
@@ -247,44 +241,44 @@ public class ARSCDecoder {
   }
 
   private void generalResIDMapping(
-     String packageName, String typename, String specName, String replace) throws IOException {
+          String packageName, String typename, String specName, String replace) throws IOException {
     mMappingWriter.write("    "
-       + packageName
-       + ".R."
-       + typename
-       + "."
-       + specName
-       + " -> "
-       + packageName
-       + ".R."
-       + typename
-       + "."
-       + replace);
+            + packageName
+            + ".R."
+            + typename
+            + "."
+            + specName
+            + " -> "
+            + packageName
+            + ".R."
+            + typename
+            + "."
+            + replace);
     mMappingWriter.write("\n");
     mMappingWriter.flush();
   }
 
   private void generalFilterResIDMapping(
-     String originalFile, String original, String replaceFile, String replace, long fileLen) throws IOException {
+          String originalFile, String original, String replaceFile, String replace, long fileLen) throws IOException {
     mMergeDuplicatedResMappingWriter.write("    "
-       + originalFile
-       + " : "
-       + original
-       + " -> "
-       + replaceFile
-       + " : "
-       + replace
-       + " (size:"
-       + getNetFileSizeDescription(fileLen)
-       + ")");
+            + originalFile
+            + " : "
+            + original
+            + " -> "
+            + replaceFile
+            + " : "
+            + replace
+            + " (size:"
+            + getNetFileSizeDescription(fileLen)
+            + ")");
     mMergeDuplicatedResMappingWriter.write("\n");
     mMergeDuplicatedResMappingWriter.flush();
   }
 
   private void generalFilterEnd(int count, long totalSize) throws IOException {
     mMergeDuplicatedResMappingWriter.write(
-       "removed: count(" + count
-          + "), totalSize(" + getNetFileSizeDescription(totalSize) + ")");
+            "removed: count(" + count
+                    + "), totalSize(" + getNetFileSizeDescription(totalSize) + ")");
     mMergeDuplicatedResMappingWriter.flush();
   }
 
@@ -382,9 +376,9 @@ public class ARSCDecoder {
 
     if (mPkgs[mCurPackageID].isCanResguard()) {
       int specSizeChange = StringBlock.writeSpecNameStringBlock(mIn,
-         mOut,
-         mPkgs[mCurPackageID].getSpecNamesBlock(),
-         mCurSpecNameToPos
+              mOut,
+              mPkgs[mCurPackageID].getSpecNamesBlock(),
+              mCurSpecNameToPos
       );
       mPkgsLenghtChange[mCurPackageID] += specSizeChange;
       mTableLenghtChange += specSizeChange;
@@ -713,10 +707,10 @@ public class ARSCDecoder {
 
     //这里面有几个限制，一对于string ,id, array我们是知道肯定不用改的，第二看要那个type是否对应有文件路径
     if (mPkg.isCanResguard()
-       && flags
-       && type == TypedValue.TYPE_STRING
-       && mShouldResguardForType
-       && mShouldResguardTypeSet.contains(mType.getName())) {
+            && flags
+            && type == TypedValue.TYPE_STRING
+            && mShouldResguardForType
+            && mShouldResguardTypeSet.contains(mType.getName())) {
       if (mTableStringsResguard.get(data) == null) {
         String raw = mTableStrings.get(data).toString();
         if (StringUtil.isBlank(raw) || raw.equalsIgnoreCase("null")) return;
@@ -778,7 +772,7 @@ public class ARSCDecoder {
         } else {
           if (!mergeDuplicatedRes && resDestFile.exists()) {
             throw new AndrolibException(String.format("res dest file is already  found: destFile=%s",
-               resDestFile.getAbsolutePath()
+                    resDestFile.getAbsolutePath()
             ));
           }
           if (filterInfo == null) {
@@ -926,12 +920,12 @@ public class ARSCDecoder {
 
       if (exceedingBI.equals(BigInteger.ZERO)) {
         LOGGER.fine(String.format("Config flags size > %d, but exceeding bytes are all zero, so it should be ok.",
-           KNOWN_CONFIG_BYTES
+                KNOWN_CONFIG_BYTES
         ));
       } else {
         LOGGER.warning(String.format("Config flags size > %d. Exceeding bytes: 0x%X.",
-           KNOWN_CONFIG_BYTES,
-           exceedingBI
+                KNOWN_CONFIG_BYTES,
+                exceedingBI
         ));
         isInvalid = true;
       }
@@ -971,8 +965,8 @@ public class ARSCDecoder {
   private void checkChunkType(int expectedType) throws AndrolibException {
     if (mHeader.type != expectedType) {
       throw new AndrolibException(String.format("Invalid chunk type: expected=0x%08x, got=0x%08x",
-         expectedType,
-         mHeader.type
+              expectedType,
+              mHeader.type
       ));
     }
   }
@@ -1004,7 +998,7 @@ public class ARSCDecoder {
 
   public static class Header {
     public final static short TYPE_NONE = -1, TYPE_TABLE = 0x0002, TYPE_PACKAGE = 0x0200, TYPE_TYPE = 0x0201,
-       TYPE_SPEC_TYPE = 0x0202, TYPE_LIBRARY = 0x0203;
+            TYPE_SPEC_TYPE = 0x0202, TYPE_LIBRARY = 0x0203;
 
     public final short type;
     public final int chunkSize;
@@ -1027,7 +1021,7 @@ public class ARSCDecoder {
     }
 
     public static Header readAndWriteHeader(ExtDataInput in, ExtDataOutput out, int diffSize)
-       throws IOException, AndrolibException {
+            throws IOException, AndrolibException {
       short type;
       int size;
       try {
@@ -1107,14 +1101,14 @@ public class ARSCDecoder {
     private final List<String> mReplaceStringBuffer;
     private final Set<Integer> mIsReplaced;
     private final Set<Integer> mIsWhiteList;
-    private String[] mAToZ = {
-       "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v",
-       "w", "x", "y", "z"
-    };
-    private String[] mAToAll = {
-       "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
-       "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
-    };
+    private List<String> mAToZ = Arrays.asList(
+            "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v",
+            "w", "x", "y", "z"
+    );
+    private List<String> mAToAll = Arrays.asList(
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
+            "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
+    );
     /**
      * 在window上面有些关键字是不能作为文件名的
      * CON, PRN, AUX, CLOCK$, NUL
@@ -1122,6 +1116,8 @@ public class ARSCDecoder {
      * LPT1, LPT2, LPT3, LPT4, LPT5, LPT6, LPT7, LPT8, and LPT9.
      */
     private HashSet<String> mFileNameBlackList;
+
+    private Random mRnd;
 
     public ResguardStringBuilder() {
       mFileNameBlackList = new HashSet<>();
@@ -1132,6 +1128,20 @@ public class ARSCDecoder {
       mReplaceStringBuffer = new ArrayList<>();
       mIsReplaced = new HashSet<>();
       mIsWhiteList = new HashSet<>();
+
+      long seed = System.nanoTime();
+      try {
+        String fixedResName = ARSCDecoder.this.mApkDecoder.getConfig().mFixedResName;
+        if (fixedResName != null && !fixedResName.isEmpty()) {
+          MessageDigest digest;
+          digest = MessageDigest.getInstance("MD5");
+          digest.update(fixedResName.getBytes(StandardCharsets.UTF_8));
+          seed = new BigInteger(digest.digest()).longValue();
+        }
+      } catch (Exception ignored) {
+
+      }
+      mRnd = new Random(seed);
     }
 
     public void reset(HashSet<Pattern> blacklistPatterns) {
@@ -1139,29 +1149,28 @@ public class ARSCDecoder {
       mIsReplaced.clear();
       mIsWhiteList.clear();
 
-      for (int i = 0; i < mAToZ.length; i++) {
-        String str = mAToZ[i];
+      //TODO: 外部指定字典，逻辑可参考ProGuard
+      Collections.shuffle(mAToZ, mRnd);
+      Collections.shuffle(mAToAll, mRnd);
+
+      for (String str: mAToZ) {
         if (!Utils.match(str, blacklistPatterns)) {
           mReplaceStringBuffer.add(str);
         }
       }
 
-      for (int i = 0; i < mAToZ.length; i++) {
-        String first = mAToZ[i];
-        for (int j = 0; j < mAToAll.length; j++) {
-          String str = first + mAToAll[j];
+      for (String first: mAToZ) {
+        for (String second: mAToAll) {
+          String str = first + second;
           if (!Utils.match(str, blacklistPatterns)) {
             mReplaceStringBuffer.add(str);
           }
         }
       }
 
-      for (int i = 0; i < mAToZ.length; i++) {
-        String first = mAToZ[i];
-        for (int j = 0; j < mAToAll.length; j++) {
-          String second = mAToAll[j];
-          for (int k = 0; k < mAToAll.length; k++) {
-            String third = mAToAll[k];
+      for (String first: mAToZ) {
+        for (String second:mAToAll) {
+          for (String third:mAToAll) {
             String str = first + second + third;
             if (!mFileNameBlackList.contains(str) && !Utils.match(str, blacklistPatterns)) {
               mReplaceStringBuffer.add(str);
