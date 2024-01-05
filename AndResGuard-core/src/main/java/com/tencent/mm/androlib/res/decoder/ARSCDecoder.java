@@ -1130,17 +1130,6 @@ public class ARSCDecoder {
       mIsWhiteList = new HashSet<>();
 
       long seed = System.nanoTime();
-      try {
-        String fixedResName = ARSCDecoder.this.mApkDecoder.getConfig().mFixedResName;
-        if (fixedResName != null && !fixedResName.isEmpty()) {
-          MessageDigest digest;
-          digest = MessageDigest.getInstance("MD5");
-          digest.update(fixedResName.getBytes(StandardCharsets.UTF_8));
-          seed = new BigInteger(digest.digest()).longValue();
-        }
-      } catch (Exception ignored) {
-
-      }
       mRnd = new Random(seed);
     }
 
