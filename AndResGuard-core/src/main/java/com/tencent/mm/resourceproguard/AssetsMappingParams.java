@@ -9,6 +9,12 @@ public class AssetsMappingParams {
     public final String password;
     public final String fileName;
 
+    public AssetsMappingParams() {
+        this.fileName = "";
+        this.enable = false;
+        this.password = "";
+    }
+
     public AssetsMappingParams(String fileName, Boolean enable, String password) {
         this.fileName = fileName;
         this.enable = enable;
