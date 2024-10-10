@@ -15,6 +15,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 public class FileOperation {
   private static final int BUFFER = 8192;
 
@@ -279,5 +283,36 @@ public class FileOperation {
       output.close();
     }
     return output.toByteArray();
+  }
+
+  public static void encryptFile(File inputFile, File outputFile, String password) {
+    try {
+      SecretKeySpec secretKeySpec = new SecretKeySpec(password.getBytes(), "AES");
+      Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+      byte[] ivBytes = new byte[16]; // 初始化向量（IV）为零数组
+      cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, new IvParameterSpec(ivBytes));
+
+      try (FileInputStream inputStream = new FileInputStream(inputFile);
+           FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+
+        // 加密并写入输出文件
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+          byte[] encryptedBytes = cipher.update(buffer, 0, bytesRead);
+          if (encryptedBytes != null) {
+            outputStream.write(encryptedBytes);
+          }
+        }
+
+        byte[] finalBytes = cipher.doFinal();
+        if (finalBytes != null) {
+          outputStream.write(finalBytes);
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException("Encryption failed", e);
+    }
   }
 }

@@ -2,6 +2,7 @@ package com.tencent.gradle
 
 import com.tencent.mm.androlib.res.util.StringUtil
 import com.tencent.mm.directory.PathNotExist
+import com.tencent.mm.resourceproguard.AssetsMappingParams
 import com.tencent.mm.resourceproguard.InputParam
 import com.tencent.mm.resourceproguard.Main
 import org.gradle.api.DefaultTask
@@ -160,6 +161,7 @@ class AndResGuardTask extends DefaultTask {
         .setDigestAlg(configuration.digestalg)
         .setMinSDKVersion(minSDKVersion)
         .setTargetSDKVersion(targetSDKVersion)
+        .setAssetsMappingParams(new AssetsMappingParams(configuration.assetsMapping.fileName, configuration.assetsMapping.enable, configuration.assetsMapping.password))
 
     if (configuration.finalApkBackupPath != null && configuration.finalApkBackupPath.length() > 0) {
       builder.setFinalApkBackupPath(configuration.finalApkBackupPath)

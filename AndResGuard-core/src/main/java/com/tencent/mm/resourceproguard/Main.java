@@ -7,8 +7,11 @@ import com.tencent.mm.androlib.res.decoder.ARSCDecoder;
 import com.tencent.mm.androlib.res.util.StringUtil;
 import com.tencent.mm.directory.DirectoryException;
 import com.tencent.mm.util.FileOperation;
+import com.tencent.mm.util.TypedValue;
+
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * @author shwenzhang
@@ -58,7 +61,8 @@ public class Main {
           finalApkFile,
           inputParam.apkPath,
           inputParam.signatureType,
-          inputParam.minSDKVersion
+          inputParam.minSDKVersion,
+          inputParam.assetsMappingParams
       );
       System.out.printf("<--AndResGuard Done! You can find the output in %s\n", mOutDir.getAbsolutePath());
       clean();
@@ -80,12 +84,12 @@ public class Main {
   }
 
   protected void resourceProguard(
-      File outputDir, File outputFile, String apkFilePath, InputParam.SignatureType signatureType) {
-    resourceProguard(outputDir, outputFile, apkFilePath, signatureType, 14 /*default min sdk*/);
+      File outputDir, File outputFile, String apkFilePath, InputParam.SignatureType signatureType, AssetsMappingParams assetsMappingParams) {
+    resourceProguard(outputDir, outputFile, apkFilePath, signatureType, 14 /*default min sdk*/, assetsMappingParams);
   }
 
   protected void resourceProguard(
-      File outputDir, File outputFile, String apkFilePath, InputParam.SignatureType signatureType, int minSDKVersoin) {
+      File outputDir, File outputFile, String apkFilePath, InputParam.SignatureType signatureType, int minSDKVersoin, AssetsMappingParams assetsMappingParams) {
     File apkFile = new File(apkFilePath);
     if (!apkFile.exists()) {
       System.err.printf("The input apk %s does not exist", apkFile.getAbsolutePath());
@@ -96,7 +100,7 @@ public class Main {
       ApkDecoder decoder = new ApkDecoder(config, apkFile);
       /* 默认使用V1签名 */
       decodeResource(outputDir, decoder, apkFile);
-      buildApk(decoder, apkFile, outputFile, signatureType, minSDKVersoin);
+      buildApk(decoder, apkFile, outputFile, signatureType, minSDKVersoin, assetsMappingParams);
     } catch (Exception e) {
       e.printStackTrace();
       goToError();
@@ -115,20 +119,24 @@ public class Main {
   }
 
   private void buildApk(
-      ApkDecoder decoder, File apkFile, File outputFile, InputParam.SignatureType signatureType, int minSDKVersion)
+      ApkDecoder decoder, File apkFile, File outputFile, InputParam.SignatureType signatureType, int minSDKVersion, AssetsMappingParams assetsMappingParams)
       throws Exception {
     ResourceApkBuilder builder = new ResourceApkBuilder(config);
     String apkBasename = apkFile.getName();
     apkBasename = apkBasename.substring(0, apkBasename.indexOf(".apk"));
     builder.setOutDir(mOutDir, apkBasename, outputFile);
     System.out.printf("[AndResGuard] buildApk signatureType: %s\n", signatureType);
+    HashMap<String, Integer> compressData = decoder.getCompressData();
+    if (assetsMappingParams.enable) {
+      compressData.put(TypedValue.ASSETS_PATH + assetsMappingParams.fileName, TypedValue.ZIP_DEFLATED);
+    }
     switch (signatureType) {
       case SchemaV1:
-        builder.buildApkWithV1sign(decoder.getCompressData());
+        builder.buildApkWithV1sign(compressData, assetsMappingParams, decoder.getResDeMappingFile());
         break;
       case SchemaV2:
       case SchemaV3:
-        builder.buildApkWithV2V3Sign(decoder.getCompressData(), minSDKVersion, signatureType);
+        builder.buildApkWithV2V3Sign(compressData, assetsMappingParams, decoder.getResDeMappingFile(), minSDKVersion, signatureType);
         break;
     }
   }

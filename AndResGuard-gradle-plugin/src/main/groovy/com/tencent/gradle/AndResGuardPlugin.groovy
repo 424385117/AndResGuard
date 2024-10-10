@@ -18,6 +18,7 @@ class AndResGuardPlugin implements Plugin<Project> {
     project.apply plugin: 'com.google.osdetector'
     project.extensions.create('andResGuard', AndResGuardExtension)
     project.extensions.add("sevenzip", new ExecutorExtension("sevenzip"))
+    project.andResGuard.extensions.create("assetsMapping", AndResGuardAssetsMappingExtension)
 
     project.afterEvaluate {
       def android = project.extensions.android

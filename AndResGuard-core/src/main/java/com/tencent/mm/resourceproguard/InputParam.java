@@ -28,6 +28,7 @@ public class InputParam {
   public final String digestAlg;
   public final int minSDKVersion;
   public final int targetSDKVersion;
+  public final AssetsMappingParams assetsMappingParams;
 
   private InputParam(
       File mappingFile,
@@ -51,7 +52,8 @@ public class InputParam {
       String finalApkBackupPath,
       String digestAlg,
       int minSDKVersion,
-      int targetSDKVersion) {
+      int targetSDKVersion,
+      AssetsMappingParams assetsMappingParams) {
 
     this.mappingFile = mappingFile;
     this.use7zip = use7zip;
@@ -75,6 +77,7 @@ public class InputParam {
     this.digestAlg = digestAlg;
     this.minSDKVersion = minSDKVersion;
     this.targetSDKVersion = targetSDKVersion;
+    this.assetsMappingParams = assetsMappingParams;
   }
 
   public enum SignatureType {
@@ -105,6 +108,7 @@ public class InputParam {
     private String digestAlg;
     private int minSDKVersion;
     private int targetSDKVersion;
+    private AssetsMappingParams assetsMappingParams;
 
     public Builder() {
       use7zip = false;
@@ -231,6 +235,11 @@ public class InputParam {
       return this;
     }
 
+    public Builder setAssetsMappingParams(AssetsMappingParams assetsMappingParams) {
+      this.assetsMappingParams = assetsMappingParams;
+      return this;
+    }
+
     public InputParam create() {
       if (targetSDKVersion >= 30) {
         // Targeting R+ (version 30 and above) requires the resources.arsc of installed APKs
@@ -261,7 +270,8 @@ public class InputParam {
           finalApkBackupPath,
           digestAlg,
           minSDKVersion,
-          targetSDKVersion
+          targetSDKVersion,
+          assetsMappingParams
       );
     }
   }

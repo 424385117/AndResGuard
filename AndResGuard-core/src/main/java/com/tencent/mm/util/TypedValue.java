@@ -36,7 +36,10 @@ public class TypedValue {
 
   public static final String RES_FILE_PATH = "r";
 
+  public static final String ASSETS_PATH = "assets/";
   public static final String RES_MAPPING_FILE = "resource_mapping_";
+
+  public static final String RES_REVERSE_MAPPING_FILE = "resource_reverse_mapping_";
 
   public static final String MERGE_DUPLICATED_RES_MAPPING_FILE = "merge_duplicated_res_mapping_";
 

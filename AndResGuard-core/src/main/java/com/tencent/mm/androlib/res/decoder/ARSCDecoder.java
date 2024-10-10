@@ -32,6 +32,8 @@ import com.tencent.mm.util.Md5Util;
 import com.tencent.mm.util.TypedValue;
 import com.tencent.mm.util.Utils;
 
+import org.json.JSONObject;
+
 import java.io.BufferedWriter;
 import java.io.EOFException;
 import java.io.File;
@@ -83,6 +85,8 @@ public class ARSCDecoder {
   private ResguardStringBuilder mResguardBuilder;
   private boolean mShouldResguardForType = false;
   private Writer mMappingWriter;
+  private Writer mReverseResMappingWriter;
+  private final JSONObject mReverseMappingJsonObject;
   private Writer mMergeDuplicatedResMappingWriter;
   private Map<Long,List<MergeDuplicatedResInfo>> mMergeDuplicatedResInfoData = new HashMap<>();
 
@@ -93,7 +97,9 @@ public class ARSCDecoder {
     mIn = new ExtDataInput(new LEDataInputStream(arscStream));
     mApkDecoder = decoder;
     proguardFileName();
+    mReverseMappingJsonObject = buildResReverseMappingJsonObject();
   }
+
 
   private ARSCDecoder(InputStream arscStream, ApkDecoder decoder, ResPackage[] pkgs) throws FileNotFoundException {
     mOldFileName = new LinkedHashMap<>();
@@ -104,6 +110,7 @@ public class ARSCDecoder {
     mOut = new ExtDataOutput(new LEDataOutputStream(new FileOutputStream(mApkDecoder.getOutTempARSCFile(), false)));
     mPkgs = pkgs;
     mPkgsLenghtChange = new int[pkgs.length];
+    mReverseMappingJsonObject = buildResReverseMappingJsonObject();
   }
 
   public static ResPackage[] decode(InputStream arscStream, ApkDecoder apkDecoder) throws AndrolibException {
@@ -127,6 +134,7 @@ public class ARSCDecoder {
 
   private void proguardFileName() throws IOException, AndrolibException {
     mMappingWriter = new BufferedWriter(new FileWriter(mApkDecoder.getResMappingFile(), false));
+    mReverseResMappingWriter = new BufferedWriter(new FileWriter(mApkDecoder.getResDeMappingFile(), false));
     mMergeDuplicatedResMappingWriter = new BufferedWriter(new FileWriter(mApkDecoder.getMergeDuplicatedResMappingFile(), false));
     mMergeDuplicatedResMappingWriter.write("res filter path mapping:\n");
     mMergeDuplicatedResMappingWriter.flush();
@@ -189,6 +197,13 @@ public class ARSCDecoder {
     Utils.cleanDir(mApkDecoder.getOutResFile());
   }
 
+  private JSONObject buildResReverseMappingJsonObject() {
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("string", new JSONObject());
+    jsonObject.put("drawable", new JSONObject());
+    return jsonObject;
+  }
+
   private ResPackage[] readTable() throws IOException, AndrolibException {
     nextChunkCheckType(Header.TYPE_TABLE);
     int packageCount = mIn.readInt();
@@ -199,11 +214,18 @@ public class ARSCDecoder {
       packages[i] = readPackage();
     }
     mMappingWriter.close();
+    fillReverseResMappingContent();
     System.out.printf("resources mapping file %s done\n", mApkDecoder.getResMappingFile().getAbsolutePath());
     generalFilterEnd(mMergeDuplicatedResCount, mMergeDuplicatedResTotalSize);
     mMergeDuplicatedResMappingWriter.close();
     System.out.printf("resources filter mapping file %s done\n", mApkDecoder.getMergeDuplicatedResMappingFile().getAbsolutePath());
     return packages;
+  }
+
+  private void fillReverseResMappingContent() throws IOException {
+      mReverseResMappingWriter.write(mReverseMappingJsonObject.toString());
+      mReverseResMappingWriter.flush();
+      mReverseResMappingWriter.close();
   }
 
   private void writeTable() throws IOException, AndrolibException {
@@ -274,6 +296,21 @@ public class ARSCDecoder {
     mMergeDuplicatedResMappingWriter.write("\n");
     mMergeDuplicatedResMappingWriter.flush();
   }
+
+    private void generalReverseResMapping(String typename, String specName, String replace) {
+        switch (typename) {
+            case "string":
+                JSONObject stringJsonObject = (JSONObject) mReverseMappingJsonObject.get("string");
+                stringJsonObject.put(replace, specName);
+                break;
+            case "drawable":
+                JSONObject drawableJsonObject = (JSONObject) mReverseMappingJsonObject.get("drawable");
+                drawableJsonObject.put(replace, specName);
+                break;
+            default:
+                break;
+        }
+    }
 
   private void generalFilterEnd(int count, long totalSize) throws IOException {
     mMergeDuplicatedResMappingWriter.write(
@@ -642,6 +679,7 @@ public class ARSCDecoder {
       throw new AndrolibException("readEntry replaceString == null");
     }
     generalResIDMapping(mPkg.getName(), mType.getName(), mSpecNames.get(specNamesId).toString(), replaceString);
+    generalReverseResMapping(mType.getName(), mSpecNames.get(specNamesId).toString(), replaceString);
     mPkg.putSpecNamesReplace(mResId, replaceString);
     // arsc name列混淆成固定名字, 减少string pool大小
     boolean useFixedName = config.mFixedResName != null && config.mFixedResName.length() > 0;

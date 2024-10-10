@@ -37,6 +37,7 @@ public class ApkDecoder {
   private File mRawResFile;
   private File mOutTempDir;
   private File mResMappingFile;
+  private File mResDeMappingFile;
   private File mMergeDuplicatedResMappingFile;
   private HashMap<String, Integer> mCompressData;
 
@@ -115,6 +116,11 @@ public class ApkDecoder {
                                + TypedValue.RES_MAPPING_FILE
                                + basename
                                + TypedValue.TXT_FILE);
+    mResDeMappingFile = new File(mOutDir.getAbsoluteFile().getAbsolutePath()
+            + File.separator
+            + TypedValue.RES_REVERSE_MAPPING_FILE
+            + basename
+            + TypedValue.TXT_FILE);
     mMergeDuplicatedResMappingFile = new File(mOutDir.getAbsoluteFile().getAbsolutePath()
                              + File.separator
                              + TypedValue.MERGE_DUPLICATED_RES_MAPPING_FILE
@@ -176,6 +182,10 @@ public class ApkDecoder {
 
   public File getResMappingFile() {
     return mResMappingFile;
+  }
+
+  public File getResDeMappingFile() {
+    return mResDeMappingFile;
   }
 
   public File getMergeDuplicatedResMappingFile() {

@@ -1,6 +1,7 @@
 package com.tencent.mm.androlib;
 
 import com.tencent.mm.androlib.res.decoder.ARSCDecoder;
+import com.tencent.mm.resourceproguard.AssetsMappingParams;
 import com.tencent.mm.resourceproguard.Configuration;
 import com.tencent.mm.resourceproguard.InputParam;
 import com.tencent.mm.util.FileOperation;
@@ -56,9 +57,9 @@ public class ResourceApkBuilder {
     this.finalApkFile = finalApkFile;
   }
 
-  public void buildApkWithV1sign(HashMap<String, Integer> compressData) throws IOException, InterruptedException {
+  public void buildApkWithV1sign(HashMap<String, Integer> compressData, AssetsMappingParams assetsMappingParams, File resMappingFile) throws IOException, InterruptedException {
     insureFileNameV1();
-    generalUnsignApk(compressData);
+    generalUnsignApk(compressData, assetsMappingParams, resMappingFile);
     signApkV1(mUnSignedApk, mSignedApk);
     use7zApk(compressData, mSignedApk, mSignedWith7ZipApk);
     alignApks();
@@ -76,9 +77,9 @@ public class ResourceApkBuilder {
     }
   }
 
-  public void buildApkWithV2V3Sign(HashMap<String, Integer> compressData, int minSDKVersion, InputParam.SignatureType signatureType) throws Exception {
+  public void buildApkWithV2V3Sign(HashMap<String, Integer> compressData, AssetsMappingParams assetsMappingParams, File resMappingFile, int minSDKVersion, InputParam.SignatureType signatureType) throws Exception {
     insureFileNameV2();
-    generalUnsignApk(compressData);
+    generalUnsignApk(compressData, assetsMappingParams, resMappingFile);
     if (use7zApk(compressData, mUnSignedApk, m7ZipApk)) {
       alignApk(m7ZipApk, mAlignedApk);
     } else {
@@ -297,12 +298,18 @@ public class ResourceApkBuilder {
     }
   }
 
-  private void generalUnsignApk(HashMap<String, Integer> compressData) throws IOException, InterruptedException {
+  private void generalUnsignApk(HashMap<String, Integer> compressData, AssetsMappingParams assetsMappingParams, File resMappingFile) throws IOException, InterruptedException {
     System.out.printf("General unsigned apk: %s\n", mUnSignedApk.getName());
     File tempOutDir = new File(mOutDir.getAbsolutePath(), TypedValue.UNZIP_FILE_PATH);
     if (!tempOutDir.exists()) {
       System.err.printf("Missing apk unzip files, path=%s\n", tempOutDir.getAbsolutePath());
       System.exit(-1);
+    }
+    if (assetsMappingParams.enable) {
+      File tmpFile = new File(resMappingFile.getParentFile(), resMappingFile.getName() + ".tmp");
+      FileOperation.encryptFile(resMappingFile, tmpFile, assetsMappingParams.password);
+      FileOperation.copyFileUsingStream(tmpFile, new File(tempOutDir, TypedValue.ASSETS_PATH + assetsMappingParams.fileName));
+      tmpFile.delete();
     }
 
     File[] unzipFiles = tempOutDir.listFiles();
